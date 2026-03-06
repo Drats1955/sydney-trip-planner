@@ -1,0 +1,5 @@
+{
+  "name": "Sydney Visitors Trip Planer",
+  "description": "AI-powered Sydney transport assistant for visitors, trip planning, and image-based directions.",
+  "requestFramePermissions": ["geolocation", "camera"]
+}
