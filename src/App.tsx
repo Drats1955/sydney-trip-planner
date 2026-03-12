@@ -4,8 +4,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Message } from './components/Message';
 import { InstallPrompt } from './components/InstallPrompt';
 import { DiscoveryMode } from './components/DiscoveryMode';
+import { TransportStatus } from './components/TransportStatus';
+import { TripPlannerFlow } from './components/TripPlannerFlow';
 import { useLanguage } from './hooks/useLanguage';
 import { getChatResponse, generateGreetingAudio } from './services/gemini';
+import { playAudio } from './utils/audio';
 import { cn } from './utils/cn';
 
 interface ChatMessage {
@@ -19,7 +22,9 @@ export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [showDiscovery, setShowDiscovery] = useState(false);
+  const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [hasPlayedGreeting, setHasPlayedGreeting] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ data: string, mimeType: string, preview: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -35,10 +40,9 @@ export default function App() {
     if (language && !hasPlayedGreeting) {
       const playGreeting = async () => {
         try {
-          const audioBase64 = await generateGreetingAudio(language);
-          if (audioBase64) {
-            const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
-            await audio.play();
+          const audioData = await generateGreetingAudio(language);
+          if (audioData) {
+            await playAudio(audioData.data, audioData.mimeType);
             setHasPlayedGreeting(true);
           }
         } catch (error) {
@@ -71,11 +75,12 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
-  const handleSend = async (text?: string) => {
+  const handleSend = async (text?: string, image?: { data: string, mimeType: string, preview?: string }) => {
     const userMessage = text || input.trim();
-    if ((!userMessage && !selectedImage) || isLoading) return;
+    if ((!userMessage && !selectedImage && !image) || isLoading) return;
 
-    const currentImage = selectedImage;
+    const currentImage = image || selectedImage;
+    if (currentImage) setIsScanning(true);
     setInput('');
     setSelectedImage(null);
     
@@ -105,13 +110,19 @@ export default function App() {
       setMessages(prev => [...prev, { role: 'model', content: "Sorry, I'm having trouble connecting to the transport network. Please try again later." }]);
     } finally {
       setIsLoading(false);
+      setIsScanning(false);
     }
+  };
+
+  const handleTripPlan = (destination: string, start: string, image?: { data: string, mimeType: string }) => {
+    const message = `I want to plan a trip from ${start} to ${destination}. Please provide the best public transport options.`;
+    handleSend(message, image);
   };
 
   const quickActions = [
     { icon: <Compass size={18} />, label: "Not Sure?", action: () => setShowDiscovery(true) },
     { icon: <ImageIcon size={18} />, label: "Take Photo or Scan", action: () => fileInputRef.current?.click() },
-    { icon: <Navigation size={18} />, label: "Trip Plan", action: () => handleSend("How do I get from Bondi Beach to Circular Quay?") },
+    { icon: <Navigation size={18} />, label: "Trip Plan", action: () => setShowTripPlanner(true) },
   ];
 
   return (
@@ -139,8 +150,9 @@ export default function App() {
         className="flex-1 overflow-y-auto p-4 scroll-smooth"
       >
         <div className="max-w-2xl mx-auto">
+          <TransportStatus />
           {messages.map((msg, idx) => (
-            <Message key={idx} role={msg.role} content={msg.content} image={msg.image} />
+            <Message key={idx} role={msg.role} content={msg.content} image={msg.image} language={language} />
           ))}
           {isLoading && (
             <div className="flex gap-3 mb-6">
@@ -250,7 +262,52 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {showTripPlanner && (
+          <TripPlannerFlow 
+            onPlan={handleTripPlan}
+            onClose={() => setShowTripPlanner(false)}
+            onOpenDiscovery={() => {
+              setShowTripPlanner(false);
+              setShowDiscovery(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <InstallPrompt />
+
+      {/* Scanning Animation Overlay */}
+      <AnimatePresence>
+        {isScanning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center"
+          >
+            <div className="relative w-64 h-64 border-2 border-emerald-500/50 rounded-3xl overflow-hidden shadow-2xl shadow-emerald-500/20">
+              <div className="absolute inset-0 bg-emerald-500/10 animate-pulse" />
+              <motion.div 
+                animate={{ top: ['0%', '100%', '0%'] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="absolute left-0 right-0 h-1 bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.8)] z-10"
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <ImageIcon size={48} className="text-emerald-500 animate-bounce" />
+              </div>
+            </div>
+            <motion.div 
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="mt-8 space-y-2"
+            >
+              <h3 className="text-white font-bold text-xl">Scanning Brochure...</h3>
+              <p className="text-emerald-400 text-sm font-medium animate-pulse">AI is identifying your destination</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

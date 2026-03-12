@@ -1,16 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '../utils/cn';
-import { User, Bot } from 'lucide-react';
+import { User, Bot, Volume2, RefreshCw } from 'lucide-react';
+import { generateSpeech } from '../services/gemini';
+import { playAudio } from '../utils/audio';
 
 interface MessageProps {
   role: 'user' | 'model';
   content: string;
   image?: string;
+  language?: string;
 }
 
-export function Message({ role, content, image }: MessageProps) {
+export function Message({ role, content, image, language = 'en' }: MessageProps) {
   const isUser = role === 'user';
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const handleListen = async () => {
+    if (isSpeaking) return;
+    setIsSpeaking(true);
+    try {
+      const audioData = await generateSpeech(content, language);
+      if (audioData) {
+        await playAudio(audioData.data, audioData.mimeType);
+        setIsSpeaking(false);
+      } else {
+        setIsSpeaking(false);
+      }
+    } catch (error) {
+      console.error("Failed to play audio:", error);
+      setIsSpeaking(false);
+    }
+  };
 
   return (
     <div className={cn(
@@ -42,6 +63,28 @@ export function Message({ role, content, image }: MessageProps) {
           <div className="prose prose-sm max-w-none prose-zinc dark:prose-invert">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
+          {!isUser && (
+            <button 
+              onClick={handleListen}
+              disabled={isSpeaking}
+              className={cn(
+                "mt-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors",
+                isSpeaking ? "text-emerald-500" : "text-zinc-400 hover:text-emerald-600"
+              )}
+            >
+              {isSpeaking ? (
+                <>
+                  <RefreshCw size={12} className="animate-spin" />
+                  Speaking...
+                </>
+              ) : (
+                <>
+                  <Volume2 size={12} />
+                  Listen to Directions
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

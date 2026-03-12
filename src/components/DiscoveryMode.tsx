@@ -40,9 +40,25 @@ export function DiscoveryMode({ onSelect, onClose }: DiscoveryModeProps) {
   const [showMap, setShowMap] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [age, setAge] = useState<string>('');
+  const [interests, setInterests] = useState<string>('');
+  const [showPersonalization, setShowPersonalization] = useState(false);
+
+  const personalizationContext = age || interests 
+    ? ` (Context: I am ${age || 'an adult'} years old and interested in ${interests || 'general sightseeing'}. Please tailor your suggestions to my age and interests.)` 
+    : '';
 
   const handleItemClick = (item: string) => {
-    onSelect(`I want to go to ${item}. How do I get there?`);
+    onSelect(`I want to go to ${item}. How do I get there?${personalizationContext}`);
+    onClose();
+  };
+
+  const handlePersonalizedSuggestions = () => {
+    if (!age && !interests) {
+      setShowPersonalization(true);
+      return;
+    }
+    onSelect(`I am ${age || 'an adult'} years old and my interests are ${interests || 'general sightseeing'}. Please suggest 5 specific places in Sydney I should visit that match my profile, and explain how to get to each using public transport.`);
     onClose();
   };
 
@@ -52,7 +68,7 @@ export function DiscoveryMode({ onSelect, onClose }: DiscoveryModeProps) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        onSelect(`I am at latitude ${latitude}, longitude ${longitude}. What are some interesting places nearby and how do I get to them using Sydney transport?`);
+        onSelect(`I am at latitude ${latitude}, longitude ${longitude}. What are some interesting places nearby and how do I get to them using Sydney transport?${personalizationContext}`);
         setIsLocating(false);
         onClose();
       },
@@ -89,6 +105,68 @@ export function DiscoveryMode({ onSelect, onClose }: DiscoveryModeProps) {
       <div className="flex-1 overflow-y-auto p-4">
         {!showMap ? (
           <div className="space-y-4">
+            {/* Personalization Section */}
+            <div className="bg-zinc-50 rounded-3xl p-4 border border-zinc-100">
+              <button 
+                onClick={() => setShowPersonalization(!showPersonalization)}
+                className="w-full flex items-center justify-between text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-100 p-2 rounded-xl text-emerald-600">
+                    <Compass size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-zinc-800">Personalize My Trip</p>
+                    <p className="text-[10px] text-zinc-500">Tailor suggestions to your age & interests</p>
+                  </div>
+                </div>
+                <ChevronRight 
+                  size={18} 
+                  className={cn("text-zinc-400 transition-transform", showPersonalization && "rotate-90")} 
+                />
+              </button>
+
+              <AnimatePresence>
+                {showPersonalization && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4 space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase ml-1">Your Age</label>
+                        <input 
+                          type="number" 
+                          placeholder="e.g. 60"
+                          value={age}
+                          onChange={(e) => setAge(e.target.value)}
+                          className="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase ml-1">Interests</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g. History, Gardens, Quiet cafes"
+                          value={interests}
+                          onChange={(e) => setInterests(e.target.value)}
+                          className="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                        />
+                      </div>
+                      <button 
+                        onClick={handlePersonalizedSuggestions}
+                        className="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-100 active:scale-[0.98] transition-transform"
+                      >
+                        Get My Personalized Plan
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <div className="grid grid-cols-1 gap-3">
               <button 
                 onClick={handleFindNearby}
