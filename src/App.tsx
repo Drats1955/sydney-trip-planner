@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, MapPin, Info, Train, Bus, Navigation, RefreshCw, Image as ImageIcon, X, Compass } from 'lucide-react';
+import { Send, MapPin, Info, Train, Bus, Navigation, RefreshCw, Image as ImageIcon, X, Compass, Ticket } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Message } from './components/Message';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -121,7 +121,7 @@ export default function App() {
 
   const quickActions = [
     { icon: <Compass size={18} />, label: "Not Sure?", action: () => setShowDiscovery(true) },
-    { icon: <ImageIcon size={18} />, label: "Take Photo or Scan", action: () => fileInputRef.current?.click() },
+    { icon: <Ticket size={18} />, label: "Wayfinding / Tickets", action: () => setShowTripPlanner(true) },
     { icon: <Navigation size={18} />, label: "Trip Plan", action: () => setShowTripPlanner(true) },
   ];
 

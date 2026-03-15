@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, MapPin, Camera, Navigation, Search, Compass, ChevronRight, QrCode, Map as MapIcon } from 'lucide-react';
+import { X, MapPin, Camera, Navigation, Search, Compass, ChevronRight, QrCode, Map as MapIcon, Ticket } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../utils/cn';
 
@@ -7,11 +7,13 @@ interface TripPlannerFlowProps {
   onPlan: (destination: string, start: string, image?: { data: string, mimeType: string }) => void;
   onClose: () => void;
   onOpenDiscovery: () => void;
+  initialStep?: 'destination' | 'start';
+  initialDestination?: string;
 }
 
-export function TripPlannerFlow({ onPlan, onClose, onOpenDiscovery }: TripPlannerFlowProps) {
-  const [step, setStep] = useState<'destination' | 'start'>('destination');
-  const [destination, setDestination] = useState('');
+export function TripPlannerFlow({ onPlan, onClose, onOpenDiscovery, initialStep = 'destination', initialDestination = '' }: TripPlannerFlowProps) {
+  const [step, setStep] = useState<'destination' | 'start'>(initialStep);
+  const [destination, setDestination] = useState(initialDestination);
   const [start, setStart] = useState('');
   const [isLocating, setIsLocating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -32,7 +34,7 @@ export function TripPlannerFlow({ onPlan, onClose, onOpenDiscovery }: TripPlanne
       
       // If we're in destination step and scan, we might want to just proceed
       if (step === 'destination') {
-        setDestination("Identified from photo");
+        setDestination("Identified from document/photo");
         setStep('start');
       } else {
         setStart("Identified from photo");
@@ -132,22 +134,31 @@ export function TripPlannerFlow({ onPlan, onClose, onOpenDiscovery }: TripPlanne
                     <span className="text-xs font-bold">Scan Brochure</span>
                   </button>
                   <button 
-                    onClick={onOpenDiscovery}
-                    className="flex flex-col items-center gap-2 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 hover:bg-emerald-100 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex flex-col items-center gap-2 p-4 bg-purple-50 border border-purple-100 rounded-2xl text-purple-700 hover:bg-purple-100 transition-colors"
                   >
-                    <Compass size={24} />
-                    <span className="text-xs font-bold">Not Sure?</span>
+                    <Ticket size={24} />
+                    <span className="text-xs font-bold">Wayfinding / Ticket</span>
                   </button>
                 </div>
 
-                <button 
-                  disabled={!destination.trim()}
-                  onClick={() => setStep('start')}
-                  className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-bold disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  Next Step
-                  <ChevronRight size={18} />
-                </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={onOpenDiscovery}
+                    className="w-full flex items-center justify-center gap-2 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 hover:bg-emerald-100 transition-colors"
+                  >
+                    <Compass size={20} />
+                    <span className="text-xs font-bold">Not Sure?</span>
+                  </button>
+                  <button 
+                    disabled={!destination.trim()}
+                    onClick={() => setStep('start')}
+                    className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    Next Step
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
               </motion.div>
             ) : (
               <motion.div 
