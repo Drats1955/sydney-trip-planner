@@ -26,6 +26,7 @@ export default function App() {
   const [showDiscovery, setShowDiscovery] = useState(false);
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [hasPlayedGreeting, setHasPlayedGreeting] = useState(false);
+  const [isGreetingPlaying, setIsGreetingPlaying] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ data: string, mimeType: string, preview: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,15 +38,18 @@ export default function App() {
   }, [greeting]);
 
   useEffect(() => {
-    if (language && !hasPlayedGreeting) {
+    if (language && !hasPlayedGreeting && !isGreetingPlaying) {
       const playGreeting = async () => {
         try {
           const audioData = await generateGreetingAudio(language);
           if (audioData) {
+            setIsGreetingPlaying(true);
             await playAudio(audioData.data, audioData.mimeType);
+            setIsGreetingPlaying(false);
             setHasPlayedGreeting(true);
           }
         } catch (error) {
+          setIsGreetingPlaying(false);
           console.warn("Audio greeting autoplay blocked or failed:", error);
         }
       };
@@ -152,7 +156,14 @@ export default function App() {
         <div className="max-w-2xl mx-auto">
           <TransportStatus />
           {messages.map((msg, idx) => (
-            <Message key={idx} role={msg.role} content={msg.content} image={msg.image} language={language} />
+            <Message 
+              key={idx} 
+              role={msg.role} 
+              content={msg.content} 
+              image={msg.image} 
+              language={language} 
+              isGreetingPlaying={isGreetingPlaying}
+            />
           ))}
           {isLoading && (
             <div className="flex gap-3 mb-6">

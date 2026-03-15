@@ -10,14 +10,15 @@ interface MessageProps {
   content: string;
   image?: string;
   language?: string;
+  isGreetingPlaying?: boolean;
 }
 
-export function Message({ role, content, image, language = 'en' }: MessageProps) {
+export function Message({ role, content, image, language = 'en', isGreetingPlaying = false }: MessageProps) {
   const isUser = role === 'user';
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const handleListen = async () => {
-    if (isSpeaking) return;
+    if (isSpeaking || isGreetingPlaying) return;
     setIsSpeaking(true);
     try {
       const audioData = await generateSpeech(content, language);
@@ -66,13 +67,18 @@ export function Message({ role, content, image, language = 'en' }: MessageProps)
           {!isUser && (
             <button 
               onClick={handleListen}
-              disabled={isSpeaking}
+              disabled={isSpeaking || isGreetingPlaying}
               className={cn(
                 "mt-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors",
-                isSpeaking ? "text-emerald-500" : "text-zinc-400 hover:text-emerald-600"
+                (isSpeaking || isGreetingPlaying) ? "text-emerald-500" : "text-zinc-400 hover:text-emerald-600"
               )}
             >
-              {isSpeaking ? (
+              {isGreetingPlaying ? (
+                <>
+                  <RefreshCw size={12} className="animate-spin" />
+                  Waiting for welcome...
+                </>
+              ) : isSpeaking ? (
                 <>
                   <RefreshCw size={12} className="animate-spin" />
                   Speaking...
