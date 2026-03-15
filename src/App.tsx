@@ -27,6 +27,7 @@ export default function App() {
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [hasPlayedGreeting, setHasPlayedGreeting] = useState(false);
   const [isGreetingPlaying, setIsGreetingPlaying] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(true);
   const [selectedImage, setSelectedImage] = useState<{ data: string, mimeType: string, preview: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,22 +43,10 @@ export default function App() {
       const playGreeting = async () => {
         try {
           setIsGreetingPlaying(true);
-          
-          // 1. Play standard greeting
-          const standardAudio = await generateGreetingAudio(language, 'standard');
-          if (standardAudio) {
-            await playAudio(standardAudio.data, standardAudio.mimeType);
+          const audioData = await generateGreetingAudio(language);
+          if (audioData) {
+            await playAudio(audioData.data, audioData.mimeType);
           }
-          
-          // Small pause between audios
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // 2. Play pre-production disclaimer
-          const preprodAudio = await generateGreetingAudio(language, 'preproduction');
-          if (preprodAudio) {
-            await playAudio(preprodAudio.data, preprodAudio.mimeType);
-          }
-          
           setIsGreetingPlaying(false);
           setHasPlayedGreeting(true);
         } catch (error) {
@@ -95,6 +84,7 @@ export default function App() {
     const userMessage = text || input.trim();
     if ((!userMessage && !selectedImage && !image) || isLoading) return;
 
+    setShowDisclaimer(false);
     const currentImage = image || selectedImage;
     if (currentImage) setIsScanning(true);
     setInput('');
@@ -166,6 +156,26 @@ export default function App() {
         className="flex-1 overflow-y-auto p-4 scroll-smooth"
       >
         <div className="max-w-2xl mx-auto">
+          <AnimatePresence>
+            {showDisclaimer && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4 overflow-hidden"
+              >
+                <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-xs text-red-800 leading-relaxed shadow-sm">
+                  <div className="flex items-start gap-2">
+                    <Info size={14} className="shrink-0 mt-0.5" />
+                    <p>
+                      <strong>Pre-production Version:</strong> This app allows you to take pictures of brochures or articles to identify destinations. 
+                      Please note that live feeds from Transport NSW and some trip planning data are still being integrated.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <TransportStatus />
           {messages.map((msg, idx) => (
             <Message 
@@ -256,7 +266,10 @@ export default function App() {
               <input
                 type="text"
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  if (e.target.value.length > 0) setShowDisclaimer(false);
+                }}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                 placeholder={selectedImage ? "Describe the image..." : "Ask about Sydney transport..."}
                 className="w-full bg-zinc-100 border-none rounded-2xl pl-4 pr-12 py-3 text-sm focus:ring-2 focus:ring-emerald-500 transition-all outline-none"
