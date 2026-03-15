@@ -153,7 +153,7 @@ export default function App() {
 
   const quickActions = [
     { icon: <Compass size={18} />, label: "Not Sure?", action: () => setShowDiscovery(true) },
-    { icon: <Ticket size={18} />, label: "Wayfinding / Tickets", action: () => setShowTripPlanner(true) },
+    { icon: <Ticket size={18} />, label: "Hotel Booking / Event Tickets", action: () => setShowTripPlanner(true) },
     { icon: <Navigation size={18} />, label: "Trip Plan", action: () => setShowTripPlanner(true) },
   ];
 

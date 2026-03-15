@@ -110,8 +110,8 @@ export function TripPlannerFlow({ onPlan, onClose, onOpenDiscovery, initialStep 
                 className="space-y-6"
               >
                 <div className="space-y-2">
-                  <h3 className="font-bold text-xl text-zinc-800">Where would you like to go?</h3>
-                  <p className="text-sm text-zinc-500">Enter a name, describe it, or scan a brochure.</p>
+                  <h3 className="font-bold text-xl text-zinc-800">Where are you heading?</h3>
+                  <p className="text-sm text-zinc-500">Enter a name, or scan your hotel booking / event ticket.</p>
                 </div>
 
                 <div className="relative">
@@ -138,7 +138,7 @@ export function TripPlannerFlow({ onPlan, onClose, onOpenDiscovery, initialStep 
                     className="flex flex-col items-center gap-2 p-4 bg-purple-50 border border-purple-100 rounded-2xl text-purple-700 hover:bg-purple-100 transition-colors"
                   >
                     <Ticket size={24} />
-                    <span className="text-xs font-bold">Wayfinding / Ticket</span>
+                    <span className="text-xs font-bold text-center">Hotel Booking / Event Tickets</span>
                   </button>
                 </div>
 
