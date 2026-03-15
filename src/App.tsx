@@ -41,13 +41,25 @@ export default function App() {
     if (language && !hasPlayedGreeting && !isGreetingPlaying) {
       const playGreeting = async () => {
         try {
-          const audioData = await generateGreetingAudio(language);
-          if (audioData) {
-            setIsGreetingPlaying(true);
-            await playAudio(audioData.data, audioData.mimeType);
-            setIsGreetingPlaying(false);
-            setHasPlayedGreeting(true);
+          setIsGreetingPlaying(true);
+          
+          // 1. Play standard greeting
+          const standardAudio = await generateGreetingAudio(language, 'standard');
+          if (standardAudio) {
+            await playAudio(standardAudio.data, standardAudio.mimeType);
           }
+          
+          // Small pause between audios
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // 2. Play pre-production disclaimer
+          const preprodAudio = await generateGreetingAudio(language, 'preproduction');
+          if (preprodAudio) {
+            await playAudio(preprodAudio.data, preprodAudio.mimeType);
+          }
+          
+          setIsGreetingPlaying(false);
+          setHasPlayedGreeting(true);
         } catch (error) {
           setIsGreetingPlaying(false);
           console.warn("Audio greeting autoplay blocked or failed:", error);

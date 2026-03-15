@@ -2,12 +2,15 @@ import { GoogleGenAI, Modality } from "@google/genai";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-export async function generateGreetingAudio(userLanguage: string) {
+export async function generateGreetingAudio(userLanguage: string, type: 'standard' | 'preproduction' = 'standard') {
   if (!GEMINI_API_KEY) return null;
 
   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   
-  const baseText = `welcome to the pre production version of the visitors and non english speaking trip planer. With the ability to take a picture of a magazine article or brochure of where they want to go have the app identify it and complete the trip planer. The live feeds from Transport NSW are not in place, for the trip planner, and other data to make this work correctly.`;
+  const standardText = `Hello! I am Sydney Visitors Trip Planer, your Sydney transport assistant. If you have a brochure or a photo of where you want to go, just tap the camera icon and I'll help you find your way!`;
+  const preproductionText = `Welcome to the pre production version of the visitors and non english speaking trip planer. With the ability to take a picture of a magazine article or brochure of where they want to go have the app identify it and complete the trip planer. The live feeds from Transport NSW are not in place, for the trip planner, and other data to make this work correctly.`;
+
+  const baseText = type === 'standard' ? standardText : preproductionText;
 
   // First, translate the text if it's not English
   let textToSpeak = baseText;
