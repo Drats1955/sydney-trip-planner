@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, MapPin, Info, Train, Bus, Navigation, RefreshCw, Image as ImageIcon, X, Compass, Ticket } from 'lucide-react';
+import { Send, MapPin, Info, Train, Bus, Navigation, RefreshCw, Image as ImageIcon, X, Compass, Ticket, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Message } from './components/Message';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -28,6 +28,7 @@ export default function App() {
   const [hasPlayedGreeting, setHasPlayedGreeting] = useState(false);
   const [isGreetingPlaying, setIsGreetingPlaying] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(true);
+  const [isGreetingBlocked, setIsGreetingBlocked] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ data: string, mimeType: string, preview: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,16 +43,24 @@ export default function App() {
     if (language && !hasPlayedGreeting && !isGreetingPlaying) {
       const playGreeting = async () => {
         try {
-          setIsGreetingPlaying(true);
           const audioData = await generateGreetingAudio(language);
           if (audioData) {
-            await playAudio(audioData.data, audioData.mimeType);
+            setIsGreetingPlaying(true);
+            try {
+              await playAudio(audioData.data, audioData.mimeType);
+              setHasPlayedGreeting(true);
+            } catch (playError) {
+              console.warn("Autoplay blocked:", playError);
+              setIsGreetingBlocked(true);
+            }
+            setIsGreetingPlaying(false);
+          } else {
+            setHasPlayedGreeting(true);
           }
-          setIsGreetingPlaying(false);
-          setHasPlayedGreeting(true);
         } catch (error) {
           setIsGreetingPlaying(false);
-          console.warn("Audio greeting autoplay blocked or failed:", error);
+          setHasPlayedGreeting(true);
+          console.warn("Audio greeting generation failed:", error);
         }
       };
       playGreeting();
@@ -120,6 +129,23 @@ export default function App() {
     }
   };
 
+  const handleManualGreeting = async () => {
+    if (isGreetingPlaying) return;
+    try {
+      setIsGreetingPlaying(true);
+      const audioData = await generateGreetingAudio(language);
+      if (audioData) {
+        await playAudio(audioData.data, audioData.mimeType);
+        setHasPlayedGreeting(true);
+        setIsGreetingBlocked(false);
+      }
+    } catch (error) {
+      console.error("Manual greeting failed:", error);
+    } finally {
+      setIsGreetingPlaying(false);
+    }
+  };
+
   const handleTripPlan = (destination: string, start: string, image?: { data: string, mimeType: string }) => {
     const message = `I want to plan a trip from ${start} to ${destination}. Please provide the best public transport options.`;
     handleSend(message, image);
@@ -167,10 +193,21 @@ export default function App() {
                 <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-xs text-red-800 leading-relaxed shadow-sm">
                   <div className="flex items-start gap-2">
                     <Info size={14} className="shrink-0 mt-0.5" />
-                    <p>
-                      <strong>Pre-production Version:</strong> This app allows you to take pictures of brochures or articles to identify destinations. 
-                      Please note that live feeds from Transport NSW and some trip planning data are still being integrated.
-                    </p>
+                    <div className="space-y-2">
+                      <p>
+                        <strong>Pre-production Version:</strong> This app allows you to take pictures of brochures or articles to identify destinations. 
+                        Please note that live feeds from Transport NSW and some trip planning data are still being integrated.
+                      </p>
+                      {isGreetingBlocked && (
+                        <button 
+                          onClick={handleManualGreeting}
+                          className="flex items-center gap-1.5 bg-red-100 hover:bg-red-200 text-red-900 px-2 py-1 rounded-lg transition-colors font-bold"
+                        >
+                          <Volume2 size={12} />
+                          Play Welcome Message
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>

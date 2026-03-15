@@ -75,8 +75,8 @@ export function Message({ role, content, image, language = 'en', isGreetingPlayi
             >
               {isGreetingPlaying ? (
                 <>
-                  <RefreshCw size={12} className="animate-spin" />
-                  Waiting for welcome...
+                  <div className="w-3 h-3 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                  Welcome playing...
                 </>
               ) : isSpeaking ? (
                 <>

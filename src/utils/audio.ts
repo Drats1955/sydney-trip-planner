@@ -31,6 +31,12 @@ export async function playAudio(base64Data: string, mimeType: string): Promise<v
       const int16Array = new Int16Array(bytes.buffer);
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
       
+      if (audioCtx.state === 'suspended') {
+        audioCtx.close().catch(console.error);
+        reject(new Error('Autoplay blocked: AudioContext is suspended'));
+        return;
+      }
+
       // Parse sample rate from mimeType if available, default to 24000
       let sampleRate = 24000;
       const rateMatch = mimeType.match(/rate=(\d+)/);
