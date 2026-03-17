@@ -22,10 +22,14 @@ export async function generateGreetingAudio(userLanguage: string) {
     textToSpeak = translationResponse.text || baseText;
   }
 
+  const prompt = userLanguage.startsWith('en') 
+    ? `Say cheerfully in a friendly Australian accent: ${textToSpeak}`
+    : `Say cheerfully and naturally in ${userLanguage}: ${textToSpeak}`;
+
   // Then, generate the audio
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: `Say cheerfully in a friendly Australian accent: ${textToSpeak}` }] }],
+    contents: [{ parts: [{ text: prompt }] }],
     config: {
       temperature: 0.3,
       responseModalities: [Modality.AUDIO],
@@ -46,9 +50,13 @@ export async function generateSpeech(text: string, userLanguage: string) {
 
   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   
+  const prompt = userLanguage.startsWith('en') 
+    ? `Say clearly in a friendly Australian accent: ${text}`
+    : `Say clearly and naturally in ${userLanguage}: ${text}`;
+
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: `Say clearly in a friendly Australian accent: ${text}` }] }],
+    contents: [{ parts: [{ text: prompt }] }],
     config: {
       temperature: 0.3,
       responseModalities: [Modality.AUDIO],
@@ -85,7 +93,8 @@ export async function getChatResponse(
   - If a destination is difficult to reach by public transport, identify the CLOSEST public transport stop and then specify how far it is from there by TAXI or WALKING.
   
   You provide information about trip planning, delays, transfers, and walking directions.
-  The user's detected language is ${userLanguage}. Please respond in this language if appropriate, or stay in English if the user switches to it.
+  CRITICAL LANGUAGE INSTRUCTION: The user's device language is ${userLanguage}. You MUST provide ALL answers, directions, and information in this language by default. Translate all transport advice, instructions, and general information into ${userLanguage}, while keeping specific Sydney proper nouns (like station names, street names, or specific ferry routes) in English if translating them would be confusing for navigation. Only use English for the main response if the user explicitly asks you to speak English.
+  
   Always be polite and professional. 
   
   PERSONALIZATION: If the user provides their age or interests (often passed in the message context), you MUST tailor your suggestions to be age-appropriate and relevant to their interests. For example, do not suggest high-energy nightlife to seniors unless they specifically ask, and focus on accessibility, comfort, and relevant cultural/leisure activities.

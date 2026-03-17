@@ -18,7 +18,7 @@ interface ChatMessage {
 }
 
 export default function App() {
-  const { language, greeting } = useLanguage();
+  const { language, greeting, errorMessage, fallbackMessage } = useLanguage();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -119,10 +119,10 @@ export default function App() {
         currentImage ? { data: currentImage.data, mimeType: currentImage.mimeType } : undefined
       );
       
-      setMessages(prev => [...prev, { role: 'model', content: response || "I'm sorry, I couldn't process that." }]);
+      setMessages(prev => [...prev, { role: 'model', content: response || fallbackMessage }]);
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'model', content: "Sorry, I'm having trouble connecting to the transport network. Please try again later." }]);
+      setMessages(prev => [...prev, { role: 'model', content: errorMessage }]);
     } finally {
       setIsLoading(false);
       setIsScanning(false);
@@ -196,7 +196,7 @@ export default function App() {
                     <div className="space-y-2">
                       <p>
                         <strong>Pre-production Version:</strong> This app allows you to take pictures of brochures or articles to identify destinations. 
-                        Please note that live feeds from Transport NSW and some trip planning data are still being integrated.
+                        Some functionality is not yet integrated.
                       </p>
                       {isGreetingBlocked && (
                         <button 
